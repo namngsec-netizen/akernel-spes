@@ -1,0 +1,38 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:        # chạy tay từ tab Actions
+  push:
+    branches: [ akernel-12-15 ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: akernel-12-15
+          submodules: recursive      # kéo cả submodule
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git bc bison flex libssl-dev make curl zip \
+            python3 gcc libc6-dev libncurses-dev \
+            build-essential ccache
+
+      - name: Run build script
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Upload AnyKernel zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-anykernel
+          path: |
+            **/AnyKernel3/*.zip
+            **/*AnyKernel*.zip
+            out/**/*.zip
