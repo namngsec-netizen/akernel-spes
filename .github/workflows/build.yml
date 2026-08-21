@@ -1,7 +1,7 @@
-name: Build Kernel
+name: Build Kernel (clean)
 
 on:
-  workflow_dispatch:        # chạy tay từ tab Actions
+  workflow_dispatch:
   push:
     branches: [ akernel-12-15 ]
 
@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: akernel-12-15
-          submodules: recursive      # kéo cả submodule
+          submodules: recursive
 
       - name: Install build dependencies
         run: |
@@ -28,11 +28,22 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: Upload AnyKernel zip
+      - name: Find generated zips
+        if: always()
+        run: |
+          echo "==== Tất cả file .zip trong repo ===="
+          find "$GITHUB_WORKSPACE" -name "*.zip" -type f
+          echo "==== Tìm thư mục AnyKernel ===="
+          find "$GITHUB_WORKSPACE" -type d -iname "*anykernel*"
+          echo "==== Kiểm tra kernel Image ===="
+          find "$GITHUB_WORKSPACE" -path "*arch/arm64/boot/Image*"
+
+      - name: Upload output (zip + Image)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-anykernel
+          name: kernel-output
           path: |
-            **/AnyKernel3/*.zip
-            **/*AnyKernel*.zip
-            out/**/*.zip
+            **/*.zip
+            **/arch/arm64/boot/Image*
+          if-no-files-found: warn
